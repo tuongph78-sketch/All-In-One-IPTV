@@ -22,10 +22,10 @@ import requests
 # ──────────────────────────────────────────────────────────────────────
 SOURCES: Final[list[str]] = [
     "https://dl.dropboxusercontent.com/s/o5vygit34v9ryly71gam4/coban66.m3u?rlkey=auyoon54hfubajt16nc7u7dbn&st=70gyvtcu&dl=0",
-    # "https://raw.githubusercontent.com/quanlehong539/TVPub/patch-3/TVPub%20IPTV",
-    # "https://1.org.vn/vmttv",
-    # "https://vmttv.duckdns.org/",
-    # "https://raw.githubusercontent.com/iptv-org/iptv/refs/heads/master/streams/vn.m3u",
+    "https://raw.githubusercontent.com/quanlehong539/TVPub/patch-3/TVPub%20IPTV",
+    "https://1.org.vn/vmttv",
+    "https://vmttv.duckdns.org/",
+    "https://raw.githubusercontent.com/iptv-org/iptv/refs/heads/master/streams/vn.m3u",
 ]
 
 EPG_URL: Final[str] = "https://epg.io.vn/epg.xml"
@@ -40,7 +40,7 @@ HTTP_HEADERS: Final[dict[str, str]] = {
 }
 
 # ──────────────────────────────────────────────────────────────────────
-# REGEX PRE-COMPILED (khai báo đầu tiên để các hàm/dict bên dưới dùng được)
+# REGEX PRE-COMPILED
 # ──────────────────────────────────────────────────────────────────────
 _NORM_RE = re.compile(r"\s+")
 _DEDUP_RE = re.compile(r"[\s\-._]+")
@@ -76,29 +76,23 @@ def _dedup_key(name: str) -> str:
 
 
 # ──────────────────────────────────────────────────────────────────────
-# CHUẨN HÓA TVG-ID THEO VNEPG (viết liền, không dấu gạch ngang)
+# CHUẨN HÓA TVG-ID THEO VNEPG
 # ──────────────────────────────────────────────────────────────────────
 TVG_ID_MAP: Final[dict[str, str]] = {
-    # VTV alias không có hd
     "vtv6": "vtv6hd",
     "vtv10": "vtv10hd",
-    # HTV — vnepg dùng dạng *hd
     "htv1": "htv1hd",
     "htv3": "htv3hd",
     "htv4": "htv4hd",
-    # HTVC alias
     "htvccanhachd": "htvccanachd",
     "htvcthuanviet": "htvcthuanviethd",
-    # Quốc phòng — bỏ gạch ngang
     "antv-hd": "antv",
     "qpvn-hd": "qpvn",
-    # Địa phương alias
     "tayninhtv": "tayninh1",
     "dongthap": "dongthap1",
     "cantho": "cantho1",
     "lamdong": "lamdong1",
     "ltv": "laichau",
-    # THVL → vinhlong
     "thvl1hd": "vinhlong1hd",
     "thvl1": "vinhlong1hd",
     "thvl2hd": "vinhlong2hd",
@@ -119,18 +113,9 @@ def normalize_tvg_id(raw_id: str) -> str:
 
 
 # ──────────────────────────────────────────────────────────────────────
-# DỮ LIỆU KÊNH: tvg-id → (tên hiển thị, nhóm/tỉnh)
-#
-# Dùng một dict duy nhất _CHANNEL_DATA thay vì 3 dict riêng biệt
-# (DISPLAY_NAME, TVGID_TO_PROVINCE, TVGID_TO_GROUP) để tránh trùng lặp
-# key và phải giữ đồng bộ thủ công.
-#
-# Giá trị (display_name, tag):
-#   tag = "VTV" | "HTV" | "QDVN"  → nhóm tương ứng
-#   tag = <tên tỉnh>               → nhóm "Địa phương"
+# DỮ LIỆU KÊNH
 # ──────────────────────────────────────────────────────────────────────
 _CHANNEL_DATA: Final[dict[str, tuple[str, str]]] = {
-    # ── VTV ──────────────────────────────────────────────────────────
     "vtv1hd": ("VTV1", "VTV"),
     "vtv2hd": ("VTV2", "VTV"),
     "vtv3hd": ("VTV3", "VTV"),
@@ -144,7 +129,6 @@ _CHANNEL_DATA: Final[dict[str, tuple[str, str]]] = {
     "vtv9hd": ("VTV9", "VTV"),
     "vtv10hd": ("VTV10", "VTV"),
     "vietnamtoday": ("Vietnam Today", "VTV"),
-    # ── HTV / HTVC ───────────────────────────────────────────────────
     "htv1hd": ("HTV1", "HTV"),
     "htv2hd": ("HTV2", "HTV"),
     "htv3hd": ("HTV3", "HTV"),
@@ -160,7 +144,6 @@ _CHANNEL_DATA: Final[dict[str, tuple[str, str]]] = {
     "htvcphunuhd": ("HTVC Phụ Nữ", "HTV"),
     "htvcthuanviethd": ("HTVC Thuần Việt", "HTV"),
     "htvcplushd": ("HTVC+", "HTV"),
-    # ── ĐỊA PHƯƠNG — Miền Bắc ────────────────────────────────────────
     "hagiang": ("Hà Giang", "Hà Giang"),
     "tuyenquang": ("Tuyên Quang", "Tuyên Quang"),
     "caobang": ("Cao Bằng", "Cao Bằng"),
@@ -190,7 +173,6 @@ _CHANNEL_DATA: Final[dict[str, tuple[str, str]]] = {
     "namdinh": ("Nam Định", "Nam Định"),
     "hanam": ("Hà Nam", "Hà Nam"),
     "ninhbinh": ("Ninh Bình", "Ninh Bình"),
-    # ── ĐỊA PHƯƠNG — Miền Trung ──────────────────────────────────────
     "thanhhoa": ("Thanh Hóa", "Thanh Hóa"),
     "nghean": ("Nghệ An", "Nghệ An"),
     "hatinh": ("Hà Tĩnh", "Hà Tĩnh"),
@@ -209,14 +191,12 @@ _CHANNEL_DATA: Final[dict[str, tuple[str, str]]] = {
     "khanhhoa2": ("Khánh Hòa 2", "Khánh Hòa"),
     "ninhthuan": ("Ninh Thuận", "Ninh Thuận"),
     "binhthuan": ("Bình Thuận", "Bình Thuận"),
-    # ── ĐỊA PHƯƠNG — Tây Nguyên ──────────────────────────────────────
     "kontum": ("Kon Tum", "Kon Tum"),
     "gialai": ("Gia Lai", "Gia Lai"),
     "daklak": ("Đắk Lắk", "Đắk Lắk"),
     "daknong": ("Đắk Nông", "Đắk Nông"),
     "lamdong1": ("Lâm Đồng 1", "Lâm Đồng"),
     "lamdong2": ("Lâm Đồng 2", "Lâm Đồng"),
-    # ── ĐỊA PHƯƠNG — Miền Nam ────────────────────────────────────────
     "binhphuoc": ("Bình Phước", "Bình Phước"),
     "tayninh1": ("Tây Ninh", "Tây Ninh"),
     "binhduong": ("Bình Dương", "Bình Dương"),
@@ -253,99 +233,30 @@ _KNOWN_IDS: Final[frozenset[str]] = frozenset(_CHANNEL_DATA)
 # THỨ TỰ HIỂN THỊ & INDEX SORT
 # ──────────────────────────────────────────────────────────────────────
 _VTV_ORDER: Final[list[str]] = [
-    "VTV1",
-    "VTV2",
-    "VTV3",
-    "VTV4",
-    "VTV5",
-    "VTV5 Tây Nam Bộ",
-    "VTV5 Tây Nguyên",
-    "VTV6",
-    "VTV7",
-    "VTV8",
-    "VTV9",
-    "VTV10",
+    "VTV1", "VTV2", "VTV3", "VTV4", "VTV5",
+    "VTV5 Tây Nam Bộ", "VTV5 Tây Nguyên",
+    "VTV6", "VTV7", "VTV8", "VTV9", "VTV10",
 ]
 _HTV_ORDER: Final[list[str]] = [
-    "HTV1",
-    "HTV2",
-    "HTV3",
-    "HTV4",
-    "HTV5",
-    "HTV7",
-    "HTV9",
-    "HTVC Thể Thao",
-    "HTVC Ca Nhạc",
-    "HTVC Du Lịch",
-    "HTVC Gia Đình",
-    "HTVC Phim",
-    "HTVC Phụ Nữ",
-    "HTVC Thuần Việt",
-    "HTVC+",
+    "HTV1", "HTV2", "HTV3", "HTV4", "HTV5", "HTV7", "HTV9",
+    "HTVC Thể Thao", "HTVC Ca Nhạc", "HTVC Du Lịch",
+    "HTVC Gia Đình", "HTVC Phim", "HTVC Phụ Nữ",
+    "HTVC Thuần Việt", "HTVC+",
 ]
 _PROVINCE_ORDER: Final[list[str]] = [
-    "Hà Giang",
-    "Tuyên Quang",
-    "Cao Bằng",
-    "Lạng Sơn",
-    "Bắc Kạn",
-    "Thái Nguyên",
-    "Quảng Ninh",
-    "Bắc Giang",
-    "Bắc Ninh",
-    "Lào Cai",
-    "Yên Bái",
-    "Phú Thọ",
-    "Vĩnh Phúc",
-    "Hà Nội",
-    "Hòa Bình",
-    "Sơn La",
-    "Điện Biên",
-    "Lai Châu",
-    "Hải Phòng",
-    "Hải Dương",
-    "Hưng Yên",
-    "Thái Bình",
-    "Nam Định",
-    "Hà Nam",
-    "Ninh Bình",
-    "Thanh Hóa",
-    "Nghệ An",
-    "Hà Tĩnh",
-    "Quảng Bình",
-    "Quảng Trị",
-    "Thừa Thiên Huế",
-    "Đà Nẵng",
-    "Quảng Nam",
-    "Quảng Ngãi",
-    "Bình Định",
-    "Phú Yên",
-    "Khánh Hòa",
-    "Ninh Thuận",
-    "Bình Thuận",
-    "Kon Tum",
-    "Gia Lai",
-    "Đắk Lắk",
-    "Đắk Nông",
-    "Lâm Đồng",
-    "Bình Phước",
-    "Tây Ninh",
-    "Bình Dương",
-    "Đồng Nai",
-    "Bà Rịa - Vũng Tàu",
-    "Long An",
-    "Tiền Giang",
-    "Bến Tre",
-    "Đồng Tháp",
-    "Vĩnh Long",
-    "Trà Vinh",
-    "An Giang",
-    "Kiên Giang",
-    "Cần Thơ",
-    "Hậu Giang",
-    "Sóc Trăng",
-    "Bạc Liêu",
-    "Cà Mau",
+    "Hà Giang", "Tuyên Quang", "Cao Bằng", "Lạng Sơn", "Bắc Kạn",
+    "Thái Nguyên", "Quảng Ninh", "Bắc Giang", "Bắc Ninh", "Lào Cai",
+    "Yên Bái", "Phú Thọ", "Vĩnh Phúc", "Hà Nội", "Hòa Bình",
+    "Sơn La", "Điện Biên", "Lai Châu", "Hải Phòng", "Hải Dương",
+    "Hưng Yên", "Thái Bình", "Nam Định", "Hà Nam", "Ninh Bình",
+    "Thanh Hóa", "Nghệ An", "Hà Tĩnh", "Quảng Bình", "Quảng Trị",
+    "Thừa Thiên Huế", "Đà Nẵng", "Quảng Nam", "Quảng Ngãi",
+    "Bình Định", "Phú Yên", "Khánh Hòa", "Ninh Thuận", "Bình Thuận",
+    "Kon Tum", "Gia Lai", "Đắk Lắk", "Đắk Nông", "Lâm Đồng",
+    "Bình Phước", "Tây Ninh", "Bình Dương", "Đồng Nai",
+    "Bà Rịa - Vũng Tàu", "Long An", "Tiền Giang", "Bến Tre",
+    "Đồng Tháp", "Vĩnh Long", "Trà Vinh", "An Giang", "Kiên Giang",
+    "Cần Thơ", "Hậu Giang", "Sóc Trăng", "Bạc Liêu", "Cà Mau",
 ]
 
 _GROUP_ORDER: Final[dict[str, int]] = {"VTV": 0, "HTV": 1, "LOCAL": 2, "QDVN": 3}
@@ -359,44 +270,25 @@ _LABEL: Final[dict[str, str]] = {
     "LOCAL": "Địa phương"
 }
 
-# Keywords nhận diện nhóm địa phương từ group-title
-_LOCAL_KEYWORDS: Final[frozenset[str]] = frozenset(
-    [
-        "địa phương",
-        "dia phuong",
-        "tỉnh",
-        "tinh",
-        "thiết yếu",
-        "thiet yeu",
-    ]
-)
+_LOCAL_KEYWORDS: Final[frozenset[str]] = frozenset([
+    "địa phương", "dia phuong", "tỉnh", "tinh", "thiết yếu", "thiet yeu"
+])
 
-# Tên kênh rác cần loại bỏ
-_NOISE_NAMES: Final[frozenset[str]] = frozenset(
-    [
-        "SỰ KIỆN",
-        "VTVPRIME",
-        "FPT",
-        "VOV",
-        "VTVCAB",
-        "SPOTV",
-        "O2",
-        "ĐỒNG NAI 3",
-        "ĐNNRTV3",
-        "VIETNAM TODAY"
-    ]
-)
+_NOISE_NAMES: Final[frozenset[str]] = frozenset([
+    "SỰ KIỆN", "VTVPRIME", "FPT", "VOV", "VTVCAB",
+    "SPOTV", "O2", "ĐỒNG NAI 3", "ĐNNRTV3", "VIETNAM TODAY"
+])
 
 
 # ──────────────────────────────────────────────────────────────────────
-# DATA MODEL
+# DATA MODEL & HELPER FUNCTIONS
 # ──────────────────────────────────────────────────────────────────────
 @dataclass(slots=True)
 class Channel:
     name: str
     url: str
-    group_key: str  # "VTV" | "HTV" | "LOCAL" | "QDVN"
-    province: str  # tên tỉnh (chỉ LOCAL), hoặc ""
+    group_key: str
+    province: str
     province_idx: int
     quality: tuple[int, float]
     tvg_id: str = ""
@@ -404,12 +296,9 @@ class Channel:
 
     @property
     def group_label(self) -> str:
-        return _LABEL[self.group_key]
+        return _LABEL.get(self.group_key, self.group_key)
 
 
-# ──────────────────────────────────────────────────────────────────────
-# HELPER FUNCTIONS
-# ──────────────────────────────────────────────────────────────────────
 def quality_score(raw: str) -> tuple[int, float]:
     tier = 40
     for pat, score in _QUALITY_TIERS:
@@ -431,7 +320,6 @@ def fetch(url: str) -> Optional[str]:
 
 
 def resolve_display_name(raw: str, tvg_id: str) -> str:
-    """Tra cứu tên đẹp theo tvg-id; fallback: tên sạch noise."""
     if tvg_id:
         entry = _CHANNEL_DATA.get(tvg_id)
         if entry:
@@ -442,10 +330,6 @@ def resolve_display_name(raw: str, tvg_id: str) -> str:
 
 
 def _classify(tvg_id: str, src_grp: str) -> Optional[str]:
-    """
-    Trả về group_key hoặc None nếu không nhận ra kênh.
-    Ưu tiên: group-title → _CHANNEL_DATA → tvg-id prefix.
-    """
     grp = src_grp.lower()
     if "vtv" in grp:
         return "VTV"
@@ -456,7 +340,6 @@ def _classify(tvg_id: str, src_grp: str) -> Optional[str]:
     if "quốc phòng" in grp or "quoc phong" in grp:
         return "QDVN"
 
-    # Fallback qua tvg-id
     if tvg_id in _KNOWN_IDS:
         tag = _CHANNEL_DATA[tvg_id][1]
         return tag if tag in ("VTV", "HTV", "QDVN") else "LOCAL"
@@ -476,7 +359,7 @@ def _is_noise(tvg_id: str, upper_name: str) -> bool:
 
 
 # ──────────────────────────────────────────────────────────────────────
-# PARSER
+# PARSER, MERGE & SORT
 # ──────────────────────────────────────────────────────────────────────
 def parse_m3u(text: str) -> list[Channel]:
     channels: list[Channel] = []
@@ -511,15 +394,13 @@ def parse_m3u(text: str) -> list[Channel]:
         if group_key is None:
             continue
 
-        province = province_idx = 0
+        province, province_idx = "", 0
         if group_key == "LOCAL":
             entry = _CHANNEL_DATA.get(tvg_id)
             if not entry:
                 continue
             province = entry[1]
             province_idx = _PROVINCE_IDX.get(province, 999)
-        else:
-            province = ""
 
         channels.append(
             Channel(
@@ -537,13 +418,7 @@ def parse_m3u(text: str) -> list[Channel]:
     return channels
 
 
-# ──────────────────────────────────────────────────────────────────────
-# DEDUP & MERGE
-# Gộp pick_best + merge_sources thành một hàm duy nhất:
-# xử lý trong một pass, dedup cả theo tên lẫn URL.
-# ──────────────────────────────────────────────────────────────────────
 def merge_sources(lists: list[list[Channel]]) -> list[Channel]:
-    """Gộp nhiều nguồn: quality-wins, dedup URL xuyên nguồn."""
     best: dict[str, Channel] = {}
     seen_urls: set[str] = set()
 
@@ -562,38 +437,32 @@ def merge_sources(lists: list[list[Channel]]) -> list[Channel]:
     return list(best.values())
 
 
-# ──────────────────────────────────────────────────────────────────────
-# SORT
-# ──────────────────────────────────────────────────────────────────────
 def sort_channels(channels: list[Channel]) -> list[Channel]:
     def key(ch: Channel) -> tuple:
-        g = _GROUP_ORDER[ch.group_key]
+        g = _GROUP_ORDER.get(ch.group_key, 99)
         if ch.group_key == "VTV":
             return (g, _VTV_IDX.get(_norm_key(ch.name), 999), ch.name)
         if ch.group_key == "HTV":
             return (g, _HTV_IDX.get(_norm_key(ch.name), 999), ch.name)
         if ch.group_key == "LOCAL":
             return (g, ch.province_idx, ch.name)
-        return (g, 0, ch.name)  # QDVN
+        return (g, 0, ch.name)
 
     return sorted(channels, key=key)
 
 
-# ──────────────────────────────────────────────────────────────────────
-# OUTPUT
-# ──────────────────────────────────────────────────────────────────────
 def write_m3u(channels: list[Channel], path: str) -> None:
     try:
         with open(path, "w", encoding="utf-8") as f:
-            f.write(f'#EXTM3U url-tvg="{EPG_URL}"\n')
-            f.write(f'#EXTM3U x-tvg-url="{EPG_URL}"\n')
+            f.write(f'#EXTM3U url-tvg="{EPG_URL}" x-tvg-url="{EPG_URL}"\n')
             for src in SOURCES:
                 f.write(f"#EXTM3U-SOURCE:{src}\n")
             for ch in channels:
+                group_title = "Quốc Phòng" if ch.group_key == "QDVN" else ch.group_label
                 f.write(
                     f'#EXTINF:-1 tvg-id="{ch.tvg_id}" '
                     f'tvg-logo="{ch.tvg_logo}" '
-                    f'group-title="{ch.group_label}",{ch.name}\n'
+                    f'group-title="{group_title}",{ch.name}\n'
                     f"{ch.url}\n"
                 )
         print(f"✅  Đã ghi {len(channels)} kênh → {path}")
