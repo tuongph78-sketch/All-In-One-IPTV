@@ -2,11 +2,11 @@ name: Update IPTV Playlist
 
 on:
   schedule:
-    - cron: "0 18 * * *"   # 01:00 ICT hàng ngày
+    - cron: "0 18 * * *"    # 01:00 ICT hàng ngày (0 UTC = 7h sáng, 18 UTC hôm trước = 1h sáng hôm sau)
   workflow_dispatch:
   push:
     paths:
-      - "update_iptv.py"   # Tự chạy khi cập nhật code
+      - "update_iptv.py"    # Tự chạy khi cập nhật code
 
 permissions:
   contents: write
@@ -25,30 +25,37 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.14.6"
+          python-version: "3.12"  # Dùng bản ổn định (hoặc "3.14" nếu script của bạn bắt buộc)
 
       - name: Install dependencies
         run: pip install requests
 
-      - name: Set Timezone to Vietnam (ICT)
-        run: sudo timedatectl set-timezone Asia/Ho_Chi_Minh
-
-      - name: List files (debug)
+      - name: List files & Check Time (Vietnam)
+        env:
+          TZ: 'Asia/Ho_Chi_Minh'
         run: |
           echo "Hiện tại là: $(date +'%Y-%m-%d %H:%M:%S %Z')"
           ls -la
 
       - name: Run IPTV updater
+        env:
+          TZ: 'Asia/Ho_Chi_Minh'
         run: python update_iptv.py
 
       - name: Commit & push http-iptv.m3u
+        env:
+          TZ: 'Asia/Ho_Chi_Minh'
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add http-iptv.m3u
           
-          # Lấy thời gian hiện tại theo định dạng VN
-          VIETNAM_TIME=$(date +'%d/%m/%Y %H:%M')
-          
-          git diff --cached --quiet || git commit -m "🔄 Auto-update IPTV ($VIETNAM_TIME ICT)"
-          git push
+          # Kiểm tra xem file có tồn tại và có thay đổi không
+          if [ -f "http-iptv.m3u" ]; then
+            git add http-iptv.m3u
+            VIETNAM_TIME=$(date +'%d/%m/%Y %H:%M')
+            git diff --cached --quiet || git commit -m "🔄 Auto-update IPTV ($VIETNAM_TIME ICT)"
+            git push
+          else
+            echo "⚠️ Không tìm thấy file http-iptv.m3u sau khi chạy script!"
+            exit 1
+          fi
